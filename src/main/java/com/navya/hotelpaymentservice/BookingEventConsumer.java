@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import java.io.IOException;
@@ -15,8 +16,12 @@ public class BookingEventConsumer {
 
     @Autowired
     private PaymentEventProducer paymentEventProducer;
+
     @Autowired
     private PaymentRepository paymentRepository;
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
 
     @KafkaListener(topics = "booking-events", groupId = "booking-payment-manager-group")
@@ -35,6 +40,9 @@ public class BookingEventConsumer {
         paymentEvent.setBookingId(bookingEvent.getBookingId());
         paymentEvent.setTotalFare(bookingEvent.getTotalFare());
 
+        //Add the payment processing logic here
+        // Simulate payment processing
+
         Thread.sleep(10000); // Simulate processing time
         boolean success = Math.random() > 0.3; // Simulate success or failure
         if(success)
@@ -44,13 +52,18 @@ public class BookingEventConsumer {
             Payment payment = new Payment();
             payment.setDateofPayment(LocalDate.now());
             payment.setBookingId(bookingEvent.getBookingId());
+            paymentEvent.setPaymentId(payment.getPaymentId());
             paymentRepository.save(payment);
+            //Add Caching logic here if needed
+            redisTemplate.opsForValue().set(paymentEvent.getBookingId().toString(), "PAYMENT SUCCEEDED");
         } else {
             logger.error("Payment processing failed for booking ID: {}", bookingEvent.getBookingId());
             // Handle failure case, e.g., send a notification or retry
             paymentEvent.setStatus("FAILURE");
+            redisTemplate.opsForValue().set(paymentEvent.getBookingId().toString(), "PAYMENT FAILURE");
         }
         // Publish the payment event
         paymentEventProducer.publishEvent(paymentEvent);
+
     }
 }

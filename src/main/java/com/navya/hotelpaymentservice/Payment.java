@@ -20,10 +20,12 @@ public class Payment {
 
     private Long bookingId;
 
+    private Integer totalPrice;
+
     private LocalDate dateofPayment;
 
     @Override
     public String toString() {
-        return "Payment [paymentId=" + paymentId + ", bookingId=" + bookingId + ", dateofPayment=" + dateofPayment + "]";
+        return "Payment [paymentId=" + getPaymentId() + ", bookingId=" + bookingId + ", dateofPayment=" + dateofPayment + "]";
     }
 }

@@ -40,6 +40,7 @@ public class PaymentRestController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Payment with booking ID " + payment.getBookingId() + " already exists");
         }else {
             logger.debug("Saving new payment with booking ID " + payment.getBookingId());
+
             paymentRepository.save(payment);
             return ResponseEntity.status(HttpStatus.CREATED).body("Payment added successfully");
         }
