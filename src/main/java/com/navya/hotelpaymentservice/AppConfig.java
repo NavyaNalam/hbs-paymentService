@@ -20,7 +20,7 @@ public class AppConfig
     @Scope("prototype")
     public WebClient authValidateWebClient(WebClient.Builder webClientBuilder)
     {
-        List<ServiceInstance> instances = discoveryClient.getInstances("auth-service");
+        List<ServiceInstance> instances = discoveryClient.getInstances("hbs-auth-service");
         //No load balancing algorithm is used here, so we are just taking the first instance
         // you can use load balancing algorithm like round robin or random if you want
         String hostname = instances.get(0).getHost();
@@ -36,7 +36,7 @@ public class AppConfig
     @Scope("prototype")
     public WebClient authGetUsersWebClient(WebClient.Builder webClientBuilder)
     {
-        List<ServiceInstance> instances = discoveryClient.getInstances("auth-service");
+        List<ServiceInstance> instances = discoveryClient.getInstances("hbs-auth-service");
         //No load balancing algorithm is used here, so we are just taking the first instance
         // you can use load balancing algorithm like round robin or random if you want
         String hostname = instances.get(0).getHost();
