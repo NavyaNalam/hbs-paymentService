@@ -50,10 +50,13 @@ public class AppConfig
 
     @Bean
     @Scope("prototype")
-    public WebClient projectRecordMessageWebClient(WebClient.Builder webClientBuilder)
+    public WebClient confirmBookingWebClient(WebClient.Builder webClientBuilder)
     {
+        List<ServiceInstance> instances = discoveryClient.getInstances("hbs-booking-service");
+        String hostname = instances.get(0).getHost();
+        String port = String.valueOf(instances.get(0).getPort());
         return webClientBuilder
-                .baseUrl(String.format("http://%s:%s/project-service", "localhost", 8072))
+                .baseUrl(String.format("http://%s:%s/api/v1/book", hostname, port))
                 .filter(new LoggingWebClientFilter())
                 .build();
     }
