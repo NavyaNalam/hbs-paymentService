@@ -15,14 +15,13 @@ import java.time.LocalDate;
 public class Payment {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long paymentId;
+    String paymentId;
 
-    private Long bookingId;
+    String bookingId;
 
-    private Integer totalPrice;
+    Integer totalPrice;
 
-    private LocalDate dateofPayment;
+    LocalDate dateofPayment;
 
     @Override
     public String toString() {

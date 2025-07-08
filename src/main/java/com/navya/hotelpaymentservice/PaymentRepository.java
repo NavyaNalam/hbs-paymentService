@@ -5,8 +5,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+@Repository
 public interface PaymentRepository extends MongoRepository<Payment, String> {
 
-    Optional<Payment> findPaymentByPaymentId(Long paymentId);
-    Optional<Payment> findBookingByBookingId(Long bookingId);
+    Optional<Payment> findPaymentByPaymentId(String paymentId);
+    Optional<Payment> findBookingByBookingId(String bookingId);
 }

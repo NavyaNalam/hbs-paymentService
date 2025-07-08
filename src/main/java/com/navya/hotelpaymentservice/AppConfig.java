@@ -11,6 +11,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.util.List;
 
 @Configuration
+
 public class AppConfig
 {
     @Autowired

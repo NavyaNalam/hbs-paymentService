@@ -8,9 +8,9 @@ import java.io.Serializable;
 @Getter
 @Setter
 public class PaymentEvent {
-    private Long bookingId;;
-    private Long paymentId;
-    private Double totalFare;
+    private String bookingId;;
+    private String paymentId;
+    private Integer totalFare;
     private String status; // Added status field to track payment status
 
     @Override

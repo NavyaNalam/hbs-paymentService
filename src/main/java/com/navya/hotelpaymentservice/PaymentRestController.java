@@ -19,7 +19,7 @@ public class PaymentRestController {
     private PaymentRepository paymentRepo;
 
     @GetMapping("fetch")
-    public ResponseEntity<?> fetchPayment(@RequestParam Long paymentId) {
+    public ResponseEntity<?> fetchPayment(@RequestParam String paymentId) {
         logger.debug("Fetching payment with ID: " + paymentId);
         Optional<Payment> payment = paymentRepo.findPaymentByPaymentId(paymentId);
         if (payment.isPresent()) {
@@ -61,7 +61,7 @@ public class PaymentRestController {
     }
 
     @DeleteMapping("delete")
-    public ResponseEntity<?> deletePayment(@RequestParam Long paymentId) {
+    public ResponseEntity<?> deletePayment(@RequestParam String paymentId) {
         logger.debug("Deleting payment with ID: " + paymentId);
         Optional<Payment> existingPayment = paymentRepo.findPaymentByPaymentId(paymentId);
         if (existingPayment.isPresent()) {

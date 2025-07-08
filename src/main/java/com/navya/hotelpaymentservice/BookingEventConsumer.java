@@ -48,11 +48,14 @@ public class BookingEventConsumer {
         if(success)
         {
             logger.info("Payment processed successfully for booking ID: {}", bookingEvent.getBookingId());
-            paymentEvent.setStatus("SUCCESS");
+
             Payment payment = new Payment();
+            logger.info("Payment Id for booking ID: {}, {}", payment.getPaymentId(), bookingEvent.getBookingId());
             payment.setDateofPayment(LocalDate.now());
             payment.setBookingId(bookingEvent.getBookingId());
+            payment.setTotalPrice(bookingEvent.getTotalFare());
             paymentEvent.setPaymentId(payment.getPaymentId());
+            paymentEvent.setStatus("SUCCESS");
             paymentRepository.save(payment);
             //Add Caching logic here if needed
             redisTemplate.opsForValue().set(paymentEvent.getBookingId().toString(), "PAYMENT SUCCEEDED");
