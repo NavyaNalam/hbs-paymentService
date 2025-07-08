@@ -30,6 +30,7 @@ public class TokenService
     }
 
 
+/*
     // Instead of using WebClient..I have used Kafka  to send the message to the Booking Service
     @Autowired
     @Qualifier("confirmBookingWebClient")
@@ -44,5 +45,6 @@ public class TokenService
                 .bodyToMono(String.class)
                 .doOnError(error -> logger.error("Error while forwarding message to project service: " + error.getMessage()))); // Assuming the token is valid for demonstration purposes
     }
+*/
 
 }

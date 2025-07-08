@@ -47,16 +47,15 @@ public class BookingEventConsumer {
         boolean success = Math.random() > 0.3; // Simulate success or failure
         if(success)
         {
-            logger.info("Payment processed successfully for booking ID: {}", bookingEvent.getBookingId());
+            logger.debug("Payment processed successfully for booking ID: {}", bookingEvent.getBookingId());
 
-            Payment payment = new Payment();
-            logger.info("Payment Id for booking ID: {}, {}", payment.getPaymentId(), bookingEvent.getBookingId());
-            payment.setDateofPayment(LocalDate.now());
-            payment.setBookingId(bookingEvent.getBookingId());
-            payment.setTotalPrice(bookingEvent.getTotalFare());
-            paymentEvent.setPaymentId(payment.getPaymentId());
+            Payment newPayment = new Payment();
+            newPayment.setDateofPayment(LocalDate.now());
+            newPayment.setBookingId(bookingEvent.getBookingId());
+            newPayment.setTotalPrice(bookingEvent.getTotalFare());
             paymentEvent.setStatus("SUCCESS");
-            paymentRepository.save(payment);
+            paymentRepository.save(newPayment);
+            logger.debug("Payment ID generated is: {}", newPayment.getPaymentId());
             //Add Caching logic here if needed
             redisTemplate.opsForValue().set(paymentEvent.getBookingId().toString(), "PAYMENT SUCCEEDED");
         } else {
@@ -66,6 +65,7 @@ public class BookingEventConsumer {
             redisTemplate.opsForValue().set(paymentEvent.getBookingId().toString(), "PAYMENT FAILURE");
         }
         // Publish the payment event
+        logger.debug("Proceeding to publish the payment event for booking ID: {}", bookingEvent.getBookingId());
         paymentEventProducer.publishEvent(paymentEvent);
 
     }

@@ -49,6 +49,7 @@ public class AppConfig
                 .build();
     }
 
+/*
     @Bean
     @Scope("prototype")
     public WebClient confirmBookingWebClient(WebClient.Builder webClientBuilder)
@@ -61,6 +62,7 @@ public class AppConfig
                 .filter(new LoggingWebClientFilter())
                 .build();
     }
+*/
 
 
 }
