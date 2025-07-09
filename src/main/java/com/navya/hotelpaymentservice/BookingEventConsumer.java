@@ -45,7 +45,7 @@ public class BookingEventConsumer {
 
         Thread.sleep(10000); // Simulate processing time
         //boolean success = Math.random() > 0.3; // Simulate success or failure
-        boolean success = true;
+        boolean success = true; // For demonstration purposes, we assume payment is always successful
         if(success)
         {
             logger.info("Payment processed successfully for booking ID: {}", bookingEvent.getBookingId());

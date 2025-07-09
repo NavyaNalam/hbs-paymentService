@@ -7,19 +7,48 @@ import org.springframework.context.annotation.Role;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.time.LocalDate;
 import java.util.Optional;
+
 
 @RestController
 @RequestMapping("api/v1/payment")
 public class PaymentRestController {
 
     private static final Logger logger = LoggerFactory.getLogger(PaymentRestController.class);
+
     @Autowired
     private PaymentRepository paymentRepo;
 
-    @GetMapping("fetch")
-    public ResponseEntity<?> fetchPayment(@RequestParam String paymentId) {
+    @Autowired
+    private PaymentEventProducer paymentEventProducer;
+
+    @Autowired
+    TokenService tokenService;
+
+
+    @GetMapping("fetch/{userId}/{paymentId}")
+    public ResponseEntity<?> fetchPayment(@RequestParam String paymentId, @RequestHeader("Authorization") String token, @RequestParam String userId) {
+        String phone = null;
+        try
+        {
+            phone =  tokenService.validateToken(token);
+        }
+        catch (WebClientResponseException e)
+        {
+            logger.info("Token validation failed: " + e.getMessage());
+            return ResponseEntity.status(401).body("Invalid token");
+        }
+
+        logger.info("Phone number from token: " + phone);
+        if(!phone.equals(userId))
+        {
+            logger.info("Phone number mismatch");
+            return ResponseEntity.status(401).body("Invalid token or phone number mismatch");
+        }
+
         logger.debug("Fetching payment with ID: " + paymentId);
         Optional<Payment> payment = paymentRepo.findPaymentByPaymentId(paymentId);
         if (payment.isPresent()) {
@@ -31,8 +60,26 @@ public class PaymentRestController {
         }
     }
 
-    @PostMapping("add")
-    public ResponseEntity<?> addPayment(@RequestBody Payment payment) {
+    @PostMapping("addPayment/{userId}")
+    public ResponseEntity<?> addPayment(@RequestBody Payment payment, @RequestHeader("Authorization") String token, @RequestParam String userId) {
+        String phone = null;
+        try
+        {
+            phone =  tokenService.validateToken(token);
+        }
+        catch (WebClientResponseException e)
+        {
+            logger.info("Token validation failed: " + e.getMessage());
+            return ResponseEntity.status(401).body("Invalid token");
+        }
+
+        logger.info("Phone number from token: " + phone);
+        if(!phone.equals(userId))
+        {
+            logger.info("Phone number mismatch");
+            return ResponseEntity.status(401).body("Invalid token or phone number mismatch");
+        }
+
         logger.debug("Adding payment: " + payment);
         Optional<Payment> existingPayment = paymentRepo.findBookingByBookingId(payment.getBookingId());
         if (existingPayment.isPresent()) {
@@ -40,9 +87,19 @@ public class PaymentRestController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Payment with booking ID " + payment.getBookingId() + " already exists");
         }else {
             logger.debug("Saving new payment with booking ID " + payment.getBookingId());
-
+            payment.setDateofPayment(LocalDate.now());
             paymentRepo.save(payment);
-            return ResponseEntity.status(HttpStatus.CREATED).body("Payment added successfully");
+
+            // Publish the payment event
+            logger.info("Proceeding to publish the payment event for booking ID: {}", payment.getBookingId());
+            PaymentEvent paymentEvent = new PaymentEvent();
+            paymentEvent.setBookingId(payment.getBookingId());
+            paymentEvent.setStatus("SUCCESS");
+            paymentEvent.setPaymentId(payment.getPaymentId());
+            paymentEvent.setTotalFare(payment.getTotalPrice());
+
+            paymentEventProducer.publishEvent(paymentEvent);
+            return ResponseEntity.status(HttpStatus.CREATED).body("Payment added successfully. Please wait for confirmation of Your Booking.");
         }
     }
 
