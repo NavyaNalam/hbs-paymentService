@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Role;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,9 @@ public class PaymentRestController {
 
     @Autowired
     private PaymentEventProducer paymentEventProducer;
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
     @Autowired
     TokenService tokenService;
@@ -97,7 +101,7 @@ public class PaymentRestController {
             paymentEvent.setStatus("SUCCESS");
             paymentEvent.setPaymentId(payment.getPaymentId());
             paymentEvent.setTotalFare(payment.getTotalPrice());
-
+            redisTemplate.opsForValue().set(paymentEvent.getBookingId().toString(), "PAYMENT SUCCEEDED");
             paymentEventProducer.publishEvent(paymentEvent);
             return ResponseEntity.status(HttpStatus.CREATED).body("Payment added successfully. Please wait for confirmation of Your Booking.");
         }
