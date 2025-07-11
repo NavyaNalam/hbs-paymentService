@@ -34,7 +34,7 @@ public class PaymentRestController {
 
 
     @GetMapping("fetch/{userId}/{paymentId}")
-    public ResponseEntity<?> fetchPayment(@RequestParam String paymentId, @RequestHeader("Authorization") String token, @RequestParam String userId) {
+    public ResponseEntity<?> fetchPayment(@PathVariable String paymentId, @RequestHeader("Authorization") String token, @PathVariable String userId) {
         String phone = null;
         try
         {
@@ -64,8 +64,10 @@ public class PaymentRestController {
         }
     }
 
-    @PostMapping("addPayment/{userId}")
-    public ResponseEntity<?> addPayment(@RequestBody Payment payment, @RequestHeader("Authorization") String token, @RequestParam String userId) {
+    @PostMapping("/{userId}/{bookingId}/add")
+    public ResponseEntity<?> addPayment(@RequestBody BookingEvent bookingEvent, @RequestHeader("Authorization") String token) {
+        // UserId is the phone number of the user
+        logger.debug("Received request to add payment for userId: " + bookingEvent.getUserId());
         String phone = null;
         try
         {
@@ -78,20 +80,24 @@ public class PaymentRestController {
         }
 
         logger.info("Phone number from token: " + phone);
-        if(!phone.equals(userId))
+        if(!phone.equals(bookingEvent.getUserId()))
         {
             logger.info("Phone number mismatch");
             return ResponseEntity.status(401).body("Invalid token or phone number mismatch");
         }
 
-        logger.debug("Adding payment: " + payment);
-        Optional<Payment> existingPayment = paymentRepo.findBookingByBookingId(payment.getBookingId());
+        logger.debug("Adding payment for booking Id: " + bookingEvent.getBookingId());
+        Optional<Payment> existingPayment = paymentRepo.findBookingByBookingId(bookingEvent.getBookingId());
         if (existingPayment.isPresent()) {
-            logger.debug("Payment for booking ID " + payment.getBookingId() + " already exists");
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Payment with booking ID " + payment.getBookingId() + " already exists");
+            logger.debug("Payment for booking ID " + bookingEvent.getBookingId() + " already exists");
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Payment with booking ID " + bookingEvent.getBookingId() + " already exists");
         }else {
-            logger.debug("Saving new payment with booking ID " + payment.getBookingId());
+            logger.debug("Saving new payment with booking ID " + bookingEvent.getBookingId());
+            Payment payment = new Payment();
+            payment.setBookingId(bookingEvent.getBookingId());
             payment.setDateofPayment(LocalDate.now());
+            payment.setTotalPrice(bookingEvent.getTotalFare());
+
             paymentRepo.save(payment);
 
             // Publish the payment event
