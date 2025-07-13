@@ -34,7 +34,7 @@ public class PaymentRestController {
 
 
     @GetMapping("fetch/{userId}/{paymentId}")
-    public ResponseEntity<?> fetchPayment(@PathVariable String paymentId, @RequestHeader("Authorization") String token, @PathVariable String userId) {
+    public ResponseEntity<?> fetchPayment(@PathVariable String paymentId, @RequestHeader("Authorization") String token, @PathVariable("userId") String userId) {
         String phone = null;
         try
         {
@@ -64,7 +64,7 @@ public class PaymentRestController {
         }
     }
 
-    @PostMapping("/{userId}/{bookingId}/add")
+    @PostMapping("/add")
     public ResponseEntity<?> addPayment(@RequestBody BookingEvent bookingEvent, @RequestHeader("Authorization") String token) {
         // UserId is the phone number of the user
         logger.debug("Received request to add payment for userId: " + bookingEvent.getUserId());
@@ -139,6 +139,31 @@ public class PaymentRestController {
             logger.debug("Payment with ID " + paymentId + " does not exist");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Payment with ID " + paymentId + " does not exist");
         }
+    }
+
+    @GetMapping("fetch/payments/{userId}")
+    public ResponseEntity<?> fetchPayment(@RequestHeader("Authorization") String token, @PathVariable("userId") String userId) {
+        String phone = null;
+        try
+        {
+            phone =  tokenService.validateToken(token);
+        }
+        catch (WebClientResponseException e)
+        {
+            logger.info("Token validation failed: " + e.getMessage());
+            return ResponseEntity.status(401).body("Invalid token");
+        }
+
+        logger.info("Phone number from token: " + phone);
+        if(!phone.equals(userId))
+        {
+            logger.info("Phone number mismatch");
+            return ResponseEntity.status(401).body("Invalid token or phone number mismatch");
+        }
+
+        logger.info("User Fetched Payments Successfully");
+        return ResponseEntity.ok("Payments Fetched Successfully" + paymentRepo.findAll());
+
     }
 
 
