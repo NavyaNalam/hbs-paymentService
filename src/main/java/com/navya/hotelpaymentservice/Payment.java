@@ -22,6 +22,8 @@ public class Payment {
 
     LocalDate dateofPayment;
 
+    String paymentStatus; // PENDING, COMPLETED, FAILED
+
     @Override
     public String toString() {
         return "Payment [paymentId=" + getPaymentId() + ", bookingId=" + bookingId + ", dateofPayment=" + dateofPayment + "]";

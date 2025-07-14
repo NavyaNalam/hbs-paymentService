@@ -49,6 +49,23 @@ public class AppConfig
                 .build();
     }
 
+
+    @Bean
+    @Scope("prototype")
+    public WebClient authGetRoleFromTokenWebClient(WebClient.Builder webClientBuilder)
+    {
+        List<ServiceInstance> instances = discoveryClient.getInstances("hbs-auth-service");
+        //No load balancing algorithm is used here, so we are just taking the first instance
+        // you can use load balancing algorithm like round robin or random if you want
+        String hostname = instances.get(0).getHost();
+        String port = String.valueOf(instances.get(0).getPort());
+
+        return webClientBuilder
+                .baseUrl(String.format("http://%s:%s/api/v1/getrole/", hostname, port))
+                .filter(new LoggingWebClientFilter())
+                .build();
+    }
+
 /*
     @Bean
     @Scope("prototype")
