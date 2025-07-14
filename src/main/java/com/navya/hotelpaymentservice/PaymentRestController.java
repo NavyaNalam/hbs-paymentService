@@ -105,7 +105,7 @@ public class PaymentRestController {
                     paymentEvent.setStatus("SUCCESS");
                     paymentEvent.setPaymentId(payment.getPaymentId());
                     paymentEvent.setTotalFare(payment.getTotalPrice());
-                    redisTemplate.opsForValue().set(paymentEvent.getBookingId().toString(), "PAYMENT SUCCEEDED");
+                    redisTemplate.opsForValue().set(bookingEvent.getBookingId().toString(), "PAYMENT SUCCEEDED");
                     paymentEventProducer.publishEvent(paymentEvent);
                     return ResponseEntity.status(HttpStatus.CREATED).body("Payment added successfully. Please wait for confirmation of Your Booking.");
                 } else {
@@ -117,7 +117,7 @@ public class PaymentRestController {
                     paymentEvent.setStatus("FAILURE");
                     paymentEvent.setPaymentId(payment.getPaymentId());
                     paymentEvent.setTotalFare(bookingEvent.getTotalFare());
-                    redisTemplate.opsForValue().set(paymentEvent.getBookingId().toString(), "PAYMENT FAILED");
+                    redisTemplate.opsForValue().set(bookingEvent.getBookingId().toString(), "PAYMENT FAILED");
                     paymentEventProducer.publishEvent(paymentEvent);
                     return ResponseEntity.status(HttpStatus.CREATED).body("Payment Failed. Please try again.");
                 }
