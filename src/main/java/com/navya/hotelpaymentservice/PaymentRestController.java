@@ -84,30 +84,27 @@ public class PaymentRestController {
                 logger.debug("Payment for booking ID " + bookingEvent.getBookingId() + " already exists and is completed");
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("Payment with booking ID " + bookingEvent.getBookingId() + " already exists and is SUCCEEDED");
             }
-            else {
+            else
+            {
+                logger.debug("Payment for booking ID " + bookingEvent.getBookingId() + " exists but is not completed, updating payment status");
                 Payment payment = existingPayment.get();
-                payment.setBookingId(bookingEvent.getBookingId());
-                payment.setDateofPayment(LocalDate.now());
                 payment.setTotalPrice(bookingEvent.getTotalFare());
+                payment.setDateofPayment(LocalDate.now());
                 if (condition.equals("SUCCESS")) {
                     logger.info("Processing payment for booking ID: " + bookingEvent.getBookingId());
-                    // Assuming the payment is successful, you can add your payment processing logic here
-                    // For example, you might call a payment gateway API to process the payment
-
                     payment.setPaymentStatus("COMPLETED");
                     paymentRepo.save(payment);
                     logger.info("Payment successful for booking ID: " + bookingEvent.getBookingId());
 
                     // Publish the payment event
-                    logger.info("Proceeding to publish the payment event for booking ID: {}", payment.getBookingId());
                     PaymentEvent paymentEvent = new PaymentEvent();
                     paymentEvent.setBookingId(payment.getBookingId());
                     paymentEvent.setStatus("SUCCESS");
                     paymentEvent.setPaymentId(payment.getPaymentId());
                     paymentEvent.setTotalFare(payment.getTotalPrice());
-                    redisTemplate.opsForValue().set(bookingEvent.getBookingId().toString(), "PAYMENT SUCCEEDED");
+                    redisTemplate.opsForValue().set(paymentEvent.getBookingId().toString(), "PAYMENT SUCCEEDED");
                     paymentEventProducer.publishEvent(paymentEvent);
-                    return ResponseEntity.status(HttpStatus.CREATED).body("Payment added successfully. Please wait for confirmation of Your Booking.");
+                    return ResponseEntity.status(HttpStatus.CREATED).body("Payment updated successfully. Please wait for confirmation of Your Booking.");
                 } else {
                     logger.info("Payment failed for booking ID: " + bookingEvent.getBookingId());
                     payment.setPaymentStatus("FAILED");
@@ -117,13 +114,13 @@ public class PaymentRestController {
                     paymentEvent.setStatus("FAILURE");
                     paymentEvent.setPaymentId(payment.getPaymentId());
                     paymentEvent.setTotalFare(bookingEvent.getTotalFare());
-                    redisTemplate.opsForValue().set(bookingEvent.getBookingId().toString(), "PAYMENT FAILED");
+                    redisTemplate.opsForValue().set(paymentEvent.getBookingId().toString(), "PAYMENT FAILED");
                     paymentEventProducer.publishEvent(paymentEvent);
                     return ResponseEntity.status(HttpStatus.CREATED).body("Payment Failed. Please try again.");
                 }
-
             }
         }
+        // If no existing payment found, create a new one
         else {
             logger.debug("Saving new payment with booking ID " + bookingEvent.getBookingId());
             Payment payment = new Payment();
@@ -187,14 +184,20 @@ public class PaymentRestController {
         }
 
         logger.debug("Editing payment: " + payment);
-        Optional<Payment> existingPayment = paymentRepo.findPaymentByPaymentId(payment.getPaymentId());
-        if (existingPayment.isEmpty()) {
+        if(redisTemplate.hasKey(payment.getBookingId().toString())) {
+            Optional<Payment> existingPayment = paymentRepo.findPaymentByPaymentId(payment.getPaymentId());
+            if (existingPayment.isEmpty()) {
+                logger.debug("Payment with ID " + payment.getPaymentId() + " does not exist");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Payment with ID " + payment.getPaymentId() + " does not exist");
+            } else {
+                logger.debug("Updating payment with ID " + payment.getPaymentId());
+                paymentRepo.save(payment);
+                return ResponseEntity.ok("Payment updated successfully");
+            }
+        }
+        else{
             logger.debug("Payment with ID " + payment.getPaymentId() + " does not exist");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Payment with ID " + payment.getPaymentId() + " does not exist");
-        } else {
-            logger.debug("Updating payment with ID " + payment.getPaymentId());
-            paymentRepo.save(payment);
-            return ResponseEntity.ok("Payment updated successfully");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Payment with ID " + payment.getPaymentId() + " Could not be fetched, Please try again later");
         }
     }
 

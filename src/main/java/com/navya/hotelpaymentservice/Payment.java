@@ -26,6 +26,6 @@ public class Payment {
 
     @Override
     public String toString() {
-        return "Payment [paymentId=" + getPaymentId() + ", bookingId=" + bookingId + ", dateofPayment=" + dateofPayment + "]";
+        return "Payment [paymentId=" + getPaymentId() + ", bookingId=" + bookingId + ", dateofPayment=" + dateofPayment + ", totalPrice=" + totalPrice + ", paymentStatus=" + paymentStatus + "]";
     }
 }
